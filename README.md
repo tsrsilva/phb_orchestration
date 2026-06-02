@@ -1,4 +1,4 @@
-# PenoBees Pipeline Orchestration
+# PhenoBees Pipeline Orchestration
 
 ## Purpose
 
