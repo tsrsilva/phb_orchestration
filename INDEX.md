@@ -39,10 +39,10 @@ Helper script for explicit data handoffs between stage outputs and inputs.
 
 Tool code and data live outside this folder:
 
-1. [../tool1](../tool1)
-2. [../tool2](../tool2)
-3. [../tool3](../tool3)
-4. [../tool4](../tool4)
+1. [../tool1](https://github.com/tsrsilva/checker)
+2. [../tool2](https://github.com/tsrsilva/phylo-parser)
+3. [../tool3](https://github.com/tsrsilva/rdf-generator)
+4. [../tool4](https://github.com/tsrsilva/query-service)
 
 ## Typical Usage Path
 
