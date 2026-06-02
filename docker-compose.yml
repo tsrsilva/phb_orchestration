@@ -1,0 +1,177 @@
+# SPDX-FileCopyrightText: 2026 Thiago S. R. Silva, Diego S. Porto
+# SPDX-License-Identifier: MIT
+
+# Master Docker Compose Orchestration for the Four-Stage Poetry Analysis Pipeline
+# Pipeline Order: tool1 → tool2 → tool3 → tool4
+#
+# Stage 1 (tool1): Tax Report - Match species names with GBIF taxonomy
+# Stage 2 (tool2): Phylo Parser - Parse phenotypic characters and map to ontologies
+# Stage 3 (tool3): RDF Generator - Generate RDF phenotype graphs with SHACL validation
+# Stage 4 (tool4): Query Service - Run SPARQL queries on RDF data
+#
+# NOTE: This file is located in the orchestration/ subdirectory
+# Paths reference parent directories (../) to access tool1-4 folders
+
+services:
+  # ============================================================================
+  # STAGE 1: Tax Report (Checker)
+  # Matches species names against GBIF backbone taxonomy
+  # Input: data/raw/*.txt
+  # Output: outputs/JSON reports
+  # ============================================================================
+  tool1:
+    build:
+      context: ../tool1
+      dockerfile: Dockerfile
+    container_name: tool1-checker
+    volumes:
+      # Input taxa files
+      - ../tool1/data/raw:/app/data
+      # Output JSON reports
+      - ../tool1/outputs:/app/outputs
+      # Configuration
+      - ../tool1/configs/config.yaml:/app/config.yaml
+      # Shared pipeline data volume for inter-tool communication
+      - pipeline-data:/pipeline-data
+    environment:
+      - ENV=production
+      - PYTHONUNBUFFERED=1
+    command: ["python", "checker/main.py"]
+    # Health check to verify successful completion
+    healthcheck:
+      test: ["CMD", "test", "-d", "/app/outputs"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full-pipeline
+      - stage1
+
+
+  # ============================================================================
+  # STAGE 2: Phylo Parser
+  # Parses phenotypic characters and maps to bio-ontologies
+  # Input: data/*.txt (phenotypic character lists)
+  # Output: output_csv/*.csv, output_json/*.json, missing_uris/
+  # Dependencies: tool1 (optional - can run independently or use tool1 outputs)
+  # ============================================================================
+  tool2:
+    build:
+      context: ../tool2
+      dockerfile: Dockerfile
+    container_name: tool2-parser
+    depends_on:
+      tool1:
+        condition: service_completed_successfully
+    volumes:
+      # Input phenotypic data
+      - ../tool2/data:/app/data:cached
+      # Ontology dictionaries
+      - ../tool2/dicts:/app/dicts:cached
+      # Configuration
+      - ../tool2/configs:/app/configs:cached
+      # Output directories
+      - ../tool2/output_csv:/app/output_csv
+      - ../tool2/output_json:/app/output_json
+      - ../tool2/missing_uris:/app/missing_uris
+      # Shared pipeline data
+      - pipeline-data:/pipeline-data
+    working_dir: /app
+    command: ["python", "-m", "phylo_parser"]
+    environment:
+      PYTHONUNBUFFERED: 1
+    healthcheck:
+      test: ["CMD", "test", "-d", "/app/output_json"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full-pipeline
+      - stage2
+      - stage2-4
+
+
+  # ============================================================================
+  # STAGE 3: RDF Generator
+  # Generates RDF phenotype graphs with SHACL validation
+  # Input: data/examples/*.json (from tool2 output_json), *.nex, shapes/*.ttl, ontologies/
+  # Output: outputs/ (RDF files, validation reports, visualizations)
+  # Dependencies: tool2 (provides JSON phenotype data)
+  # ============================================================================
+  tool3:
+    build:
+      context: ../tool3
+      dockerfile: Dockerfile
+    container_name: tool3-rdf-generator
+    depends_on:
+      tool2:
+        condition: service_completed_successfully
+    volumes:
+      # Input data (JSON from tool2, NEXUS files, shapes, ontologies)
+      - ../tool3/data:/app/data
+      # Output RDF and validation reports
+      - ../tool3/outputs:/app/outputs
+      # Configuration
+      - ../tool3/configs/config.yaml:/app/configs/config.yaml
+      # Shared pipeline data
+      - pipeline-data:/pipeline-data
+    environment:
+      - ENV=production
+      - PYTHONUNBUFFERED=1
+    working_dir: /app
+    command: ["python", "rdf_generator/main.py"]
+    healthcheck:
+      test: ["CMD", "test", "-d", "/app/outputs/combined_graphs"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full-pipeline
+      - stage3
+      - stage2-4
+
+
+  # ============================================================================
+  # STAGE 4: Query Service
+  # Runs SPARQL queries on RDF data and generates CSV results
+  # Input: data/kb.ttl, queries/*.sparql (reads from tool3 outputs)
+  # Output: outputs/materialized.ttl, *.csv query results
+  # Dependencies: tool3 (provides RDF data)
+  # ============================================================================
+  tool4:
+    build:
+      context: ../tool4
+      dockerfile: Dockerfile
+    container_name: tool4-query-service
+    depends_on:
+      tool3:
+        condition: service_completed_successfully
+    volumes:
+      # Input RDF data and ontologies
+      - ../tool4/data:/app/data:ro
+      # SPARQL queries
+      - ../tool4/queries:/app/queries:ro
+      # Output materialized graphs and CSV results
+      - ../tool4/outputs:/app/outputs
+      # Configuration
+      - ../tool4/config/config.yaml:/app/config/config.yaml
+      # Shared pipeline data
+      - pipeline-data:/pipeline-data
+    environment:
+      - PYTHONUNBUFFERED=1
+    working_dir: /app
+    command: ["python", "src/main.py"]
+    healthcheck:
+      test: ["CMD", "test", "-f", "/app/outputs/materialized.ttl"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full-pipeline
+      - stage4
+
+
+volumes:
+  # Shared volume for inter-tool data passing and pipeline state
+  pipeline-data:
+    driver: local
