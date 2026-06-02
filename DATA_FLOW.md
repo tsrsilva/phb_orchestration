@@ -40,10 +40,11 @@ Outputs:
 
 Inputs:
 
-1. ../tool3/data/examples/*.json
-2. ../tool3/data/**/*.nex
-3. ../tool3/data/shapes/shapes.ttl
-4. ../tool3/data/ontologies/*
+1. ../tool3/data/input_chars/*.json
+2. ../tool3/data/nex/*.nex
+3. ../tool3/data/species/*.json
+4. ../tool3/data/shapes/shapes.ttl
+5. ../tool3/data/ontologies/*
 
 Outputs:
 
