@@ -7,7 +7,7 @@ This document defines how TaxReport, Phylo Parser, RDF Generator, and Query Serv
 Run from:
 
 ```bash
-cd /home/thiagosa/Projects/orchestration
+cd [PATH]/phb_orchestration
 ```
 
 ## Pipeline Stages
