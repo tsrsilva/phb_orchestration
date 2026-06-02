@@ -57,9 +57,9 @@ check_files() {
     return 0
 }
 
-# Integrate Phylo Parser outputs to RDF Generator
+# Integrate Phylo Parser outputs to RDF Generator input characters
 integrate_tool2_to_tool3() {
-    print_header "Integrating Phylo Parser → RDF Generator (JSON outputs)"
+    print_header "Integrating Phylo Parser → RDF Generator (input character JSON)"
     
     # Source and destination (relative to PROJECTS_DIR)
     source_dir="$PROJECTS_DIR/tool2/output_json"
@@ -82,7 +82,7 @@ integrate_tool2_to_tool3() {
     mkdir -p "$dest_dir"
     
     # Copy files
-    print_info "Copying JSON files from Phylo Parser to RDF Generator..."
+    print_info "Copying JSON files from Phylo Parser to RDF Generator examples..."
     cp "$source_dir"/*.json "$dest_dir/" 2>/dev/null || true
     
     # Verify
@@ -170,6 +170,15 @@ validate_integration() {
         return 1
     fi
     
+    # Check RDF Generator required inputs
+    print_info "Checking RDF Generator examples input..."
+    if check_dir "$PROJECTS_DIR/tool3/data/examples" && check_files "$PROJECTS_DIR/tool3/data/examples" "*.json"; then
+        print_success "RDF Generator examples ready"
+    else
+        print_error "RDF Generator examples not ready"
+        return 1
+    fi
+
     # Check RDF Generator → Query Service
     print_info "Checking RDF Generator outputs for Query Service..."
     if check_dir "$PROJECTS_DIR/tool3/outputs/combined_graphs" && check_files "$PROJECTS_DIR/tool3/outputs/combined_graphs" "*.ttl"; then

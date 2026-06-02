@@ -46,6 +46,10 @@ services:
     profiles:
       - full-pipeline
       - stage1
+      - stage2
+      - stage3
+      - stage4
+      - stage2-4
 
 
   # ============================================================================
@@ -88,13 +92,15 @@ services:
     profiles:
       - full-pipeline
       - stage2
+      - stage3
+      - stage4
       - stage2-4
 
 
   # ============================================================================
   # STAGE 3: RDF Generator
   # Generates RDF phenotype graphs with SHACL validation
-  # Input: data/examples/*.json (from tool2 output_json), *.nex, shapes/*.ttl, ontologies/
+  # Input: data/examples/*.json, data/examples/*.nex, data/examples/species.json, shapes/*.ttl, ontologies/
   # Output: outputs/ (RDF files, validation reports, visualizations)
   # Dependencies: tool2 (provides JSON phenotype data)
   # ============================================================================
@@ -107,7 +113,7 @@ services:
       tool2:
         condition: service_completed_successfully
     volumes:
-      # Input data (JSON from tool2, NEXUS files, shapes, ontologies)
+      # Input data (examples JSON/NEX files, species file, shapes, ontologies)
       - ../tool3/data:/app/data
       # Output RDF and validation reports
       - ../tool3/outputs:/app/outputs
@@ -128,6 +134,7 @@ services:
     profiles:
       - full-pipeline
       - stage3
+      - stage4
       - stage2-4
 
 
@@ -169,6 +176,7 @@ services:
     profiles:
       - full-pipeline
       - stage4
+      - stage2-4
 
 
 volumes:

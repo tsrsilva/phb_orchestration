@@ -108,7 +108,7 @@ run_full_pipeline() {
         print_success "Pipeline started in detached mode"
         print_info "View logs with: cd '$SCRIPT_DIR' && ./orchestrate.sh logs"
     else
-        docker compose --profile full-pipeline up $build_flag
+        docker compose --profile full-pipeline up $build_flag --abort-on-container-exit --exit-code-from tool4
         print_success "Pipeline completed"
     fi
 }
@@ -123,7 +123,34 @@ run_stage() {
     [[ "$SKIP_BUILD" != "true" ]] && build_flag="--build"
     
     cd "$SCRIPT_DIR"
-    docker compose --profile "$stage" up $build_flag
+
+    # Run a single stage container without upstream dependencies.
+    # Full pipeline ordering and dependency gating is handled by the `full` command.
+    case "$stage" in
+        stage1)
+            docker compose --profile full-pipeline up --no-deps $build_flag --abort-on-container-exit --exit-code-from tool1 tool1
+            ;;
+        stage2)
+            docker compose --profile full-pipeline up --no-deps $build_flag --abort-on-container-exit --exit-code-from tool2 tool2
+            ;;
+        stage3)
+            docker compose --profile full-pipeline up --no-deps $build_flag --abort-on-container-exit --exit-code-from tool3 tool3
+            ;;
+        stage4)
+            docker compose --profile full-pipeline up --no-deps $build_flag --abort-on-container-exit --exit-code-from tool4 tool4
+            ;;
+        stage2-4)
+            print_info "Running stages 2-4 sequentially without tool1"
+            docker compose --profile full-pipeline up --no-deps $build_flag --abort-on-container-exit --exit-code-from tool2 tool2
+            docker compose --profile full-pipeline up --no-deps $build_flag --abort-on-container-exit --exit-code-from tool3 tool3
+            docker compose --profile full-pipeline up --no-deps $build_flag --abort-on-container-exit --exit-code-from tool4 tool4
+            ;;
+        *)
+            print_error "Unknown stage: $stage"
+            exit 1
+            ;;
+    esac
+
     print_success "Stage $stage completed"
 }
 
