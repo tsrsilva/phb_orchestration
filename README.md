@@ -1,4 +1,4 @@
-# Four-Tool Pipeline Orchestration
+# PenoBees Pipeline Orchestration
 
 ## Purpose
 
