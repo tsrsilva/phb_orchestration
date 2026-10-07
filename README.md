@@ -6,7 +6,7 @@ This guide explains how to run the TaxReport, Phylo Parser, RDF Generator, and Q
 
 The pipeline runs in this order:
 
-1. TaxReport
+1. Tax Report
 2. Phylo Parser
 3. RDF Generator
 4. Query Service
@@ -15,7 +15,7 @@ The pipeline runs in this order:
 
 The orchestration setup in this folder coordinates four containerized tools:
 
-1. [TaxReport](https://github.com/tsrsilva/checker): species name checking against GBIF
+1. [Tax Report](https://github.com/tsrsilva/checker): species name checking against GBIF
 2. [Phylo Parser](https://github.com/tsrsilva/phylo-parser): phenotype parsing and ontology mapping
 3. [RDF Generator](https://github.com/tsrsilva/rdf-generator): RDF graph generation and SHACL validation
 4. [Query Service](https://github.com/tsrsilva/query-service): RDF materialization and SPARQL query execution
@@ -26,7 +26,7 @@ Execution is controlled by `docker-compose.yml`, with helper scripts `orchestrat
 
 | User-facing name | Compose service |
 |---|---|
-| TaxReport | tool1 |
+| Tax Report | tool1 |
 | Phylo Parser | tool2 |
 | RDF Generator | tool3 |
 | Query Service | tool4 |
@@ -60,7 +60,7 @@ The tool directories remain at the parent level:
 
 Docker Compose enforces stage ordering with dependencies:
 
-1. Phylo Parser waits for TaxReport
+1. Phylo Parser waits for Tax Report
 2. RDF Generator waits for Phylo Parser
 3. Query Service waits for RDF Generator
 
@@ -119,8 +119,9 @@ docker compose --profile full-pipeline up --build
 
 The primary handoffs are:
 
-1. Phylo Parser JSON outputs to RDF Generator inputs
-2. RDF Generator RDF outputs to Query Service inputs
+1. Tax Report JSON outputs to RDF Generator inputs
+2. Phylo Parser JSON outputs to RDF Generator inputs
+3. RDF Generator RDF outputs to Query Service inputs
 
 Use `integrate.sh` when explicit copying is needed:
 
@@ -168,7 +169,7 @@ Validate integration readiness:
 
 Pipeline outputs are written in each tool directory:
 
-1. TaxReport: `../tool1/outputs`
+1. Tax Report: `../tool1/outputs`
 2. Phylo Parser: `../tool2/output_json`, `../tool2/output_csv`, `../tool2/missing_uris`
 3. RDF Generator: `../tool3/outputs`
 4. Query Service: `../tool4/outputs`
